@@ -10,75 +10,83 @@ export class Item {
     }
 }
 
-export interface Item {
-  update(): void
+export interface Updater {
+  update(item: Item): void
 }
 
-Item.prototype.update = function() {
-  this.sellIn -= 1;
-  if (this.quality < 50) {
-    this.sellIn >= 0 ? (this.quality -= 1) : (this.quality -= 2);
-  }
-}
-
-export class Brie extends Item {
-  constructor(name, sellIn, quality){
-    super(name, sellIn, quality)
-  }
-
-  update() {
-    this.sellIn -= 1;
-    if (this.quality < 50) {
-      this.sellIn >= 0 ? (this.quality += 1) : (this.quality += 2);
+class BrieUpdater implements Updater {
+  update(item: Item) {
+    item.sellIn -= 1;
+    if (item.quality < 50) {
+      item.sellIn >= 0 ? (item.quality += 1) : (item.quality += 2);
     }
   }
 }
 
-export class Pass extends Item {
-  constructor(name, sellIn, quality){
-    super(name, sellIn, quality)
-  }
-
-  update() {
-    this.sellIn -= 1;
-    if (this.quality < 50) {
-      if (this.sellIn <= 10 && this.sellIn > 5) this.quality += 2;
-      else if (this.sellIn <= 5 && this.sellIn >= 0) this.quality += 3;
-      else if (this.sellIn < 0) this.quality = 0;
-      else this.quality += 1;
+class PassUpdater implements Updater {
+  update(item: Item) {
+    item.sellIn -= 1;
+    if (item.quality < 50) {
+      if (item.sellIn <= 10 && item.sellIn > 5) item.quality += 2;
+      else if (item.sellIn <= 5 && item.sellIn >= 0) item.quality += 3;
+      else if (item.sellIn < 0) item.quality = 0;
+      else item.quality += 1;
     }
   }
 }
 
-export class Conjured extends Item {
-  constructor(name, sellIn, quality){
-    super(name, sellIn, quality)
-  }
-
-  update() {
-    this.sellIn -= 1;
-    if (this.quality < 50) {
-      this.sellIn >= 0 ? (this.quality -= 2) : (this.quality -= 4);
+class ConjuredUpdater implements Updater {
+  update(item: Item) {
+    item.sellIn -= 1;
+    if (item.quality < 50) {
+      item.sellIn >= 0 ? (item.quality -= 2) : (item.quality -= 4);
     }
   }
 }
 
-export class Sulfuras extends Item {
-  constructor(name, sellIn, quality){
-    super(name, sellIn, quality)
+class SulfurasUpdater implements Updater {
+  update(item: Item) {
+    console.log(`The item ${item.name} does not update`)
+  }
+}
+
+class GeneralUpdater implements Updater {
+  update(item: Item) {
+    item.sellIn -= 1;
+    if (item.quality < 50) {
+      item.sellIn >= 0 ? (item.quality -= 1) : (item.quality -= 2);
+    }
+  }
+}
+
+function mapper(name: string) {
+  switch (true) {
+    case /.*aged Brie.*/i.test(name):
+      return new BrieUpdater()
+    case /.*backstage passes.*/i.test(name):
+      return new PassUpdater()    
+    case /.*conjured.*/i.test(name):
+      return new ConjuredUpdater()
+    case /.*sulfuras.*/i.test(name):
+      return new SulfurasUpdater()
+    default:
+      return new GeneralUpdater()
   }
 }
 
 export class GildedRose {
   items: Array<Item>;
+  mapper: any
 
-  constructor(items = [] as Array<Item>) {
+  constructor(items = [] as Array<Item>, mapper: any) {
     this.items = items;
+    this.mapper = mapper
   }
 
   updateQuality() {
     this.items.forEach((item) => {
-    item.update()
+      const updater = mapper(item.name)
+      updater.update(item)
     });
   
     return this.items
